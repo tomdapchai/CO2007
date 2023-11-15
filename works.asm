@@ -2,6 +2,7 @@
 	# Initialize two boards with all elements are 0
 	board1:	.word 0:49
 	board2:	.word 0:49
+	ip:	.space 1000
 	
 	welcome:	.asciiz "Welcome to BATTLESHIP game!\n"
 	instruction:	.asciiz "To start, each player have to give the coordinate of 3 2x1 ships, 2 3x1 ships, 1 4x1 ships with format <row_bow> <column_bow> <row_stern> <column_stern> \nFor example: a 4x1 ship has the coordinate of bow is (0, 0) and stern is (0, 3) will be entered as 0 0 0 3.\n"
@@ -234,14 +235,12 @@ end:
 # Function area
 input:	
 	# set index & counter
-	addi $sp, $sp, -8
+	addi $sp, $sp, -4
 	sw $t1, 0($sp)
-	sw $ra, 4($sp)
 	li $t0, 0		# index
 	li $t1, 0		# counter
 	addi $s5, $a0, 0	# store the board to $s5
 inputLoop:			# n times, n = 1, 2, 3
-	
 	li $t0, 0
 	
 	li $v0, 4
@@ -257,33 +256,44 @@ inputLoop:			# n times, n = 1, 2, 3
 	syscall
 	
 	# input
-	li $v0, 5
-	syscall
-	add $t2, $v0, $zero	#row_bow
-	add $a2, $t2, $zero
-	jal isValid
-	beq $v0, $zero, errorRange	
+	addi $s2, $a1, 0	# store $a1 value
 	
-	li $v0, 5
+	li $v0, 8
+	la $a0, ip
+	li $a1, 1000
 	syscall
-	add $t3, $v0, $zero	#column_bow
-	add $a2, $t3, $zero
-	jal isValid
-	beq $v0, $zero, errorRange	
 	
-	li $v0, 5
-	syscall
-	add $t4, $v0, $zero	#row_stern
-	add $a2, $t4, $zero 
-	jal isValid
-	beq $v0, $zero, errorRange	
+	addi $a1, $s2, 0	# restore $a1 value, $s2 free
+	addi $t6, $a0, 0	# t6 contains input string
+	li $s2, 0
+checkInputLoop:
+	lb $s3, 0($t6)
+	div $t2, $s2, 2
+	mfhi $t2
+	bne $t2, $zero, ifOdd
+	li $t7, 55		# even, check if < 7
+	bge $s3, $t7, errorRange
+	bgt $zero, $s3, errorRange
+	j noInputError
+ifOdd:
+	li $t7, 32		# odd, check if space
+	bne $s3, $t7, errorRange
+noInputError:
+	addi $s2, $s2, 1
+	addi $t6, $t6, 1
+	bge $s2, 7, endCheckInput
+	j checkInputLoop
+endCheckInput:
+	sub $t6, $t6, 7
+	lb $t2, 0($t6)
+	lb $t3, 2($t6)
+	lb $t4, 4($t6)
+	lb $t5, 6($t6)
 	
-	li $v0, 5
-	syscall
-	add $t5, $v0, $zero	#column_stern
-	add $a2, $t5, $zero
-	jal isValid
-	beq $v0, $zero, errorRange	
+	sub $t2, $t2, 48
+	sub $t3, $t3, 48
+	sub $t4, $t4, 48
+	sub $t5, $t5, 48
 	
 	# checkPos and checkSize
 	addi $s4, $a1, -4	# required size (negative)
@@ -407,7 +417,7 @@ errorLength:
 	syscall
 	
 	li $v0, 1
-	addi $a0, $4, 0
+	addi $a0, $s4, 0
 	syscall
 	
 	li $v0, 4
@@ -422,8 +432,7 @@ keepInput:
 	j inputLoop
 exitInput:	
 	lw $t1, 0($sp)
-	lw $ra, 4($sp)
-	addi $sp, $sp, 8
+	addi $sp, $sp, 4
 	jr $ra
 
 game:
@@ -495,4 +504,3 @@ isValid:
         	slt $t6, $t6, $a2
         	and $v0, $v0, $t6
         	jr $ra
-
