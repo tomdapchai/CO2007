@@ -33,7 +33,7 @@
 	winP1:	.asciiz "Player 1 WIN!\n"
 	winP2:	.asciiz "Player 2 WIN!\n"
 	newline:	.asciiz "\n"
-	
+	space:		.asciiz " "
 	check:	.asciiz "check\n"
 	check1:	.asciiz "check1\n"
 	arrCheck:	.asciiz "arrCheck\n"
@@ -108,9 +108,14 @@ print_rowP1:
         	add $t5, $t5, $t4
         	mul $t5, $t5, 4 	
         	add $t5, $s0, $t5 	# $t5 = board1[i]
-        	lw $a0, 0($t5) 		
+        	lb $a0, 0($t5) 		
         	li $v0, 1 		
         	syscall
+        	
+        	la $a0, space
+        	li $v0, 4
+        	syscall
+        	
         	addi $t4, $t4, 1 	# increment column counter
         	j print_rowP1
 print_newlineP1:
@@ -177,6 +182,11 @@ print_rowP2:
         	lw $a0, 0($t5) # load the integer to be printed
         	li $v0, 1 # system call code for print_int
         	syscall
+        	
+        	la $a0, space
+        	li $v0, 4
+        	syscall
+        	
         	addi $t4, $t4, 1 # increment column counter
         	j print_rowP2
 print_newlineP2:
@@ -266,16 +276,19 @@ inputLoop:			# n times, n = 1, 2, 3
 	addi $a1, $s2, 0	# restore $a1 value, $s2 free
 	addi $t6, $a0, 0	# t6 contains input string
 	li $s2, 0
+	lb $t8, 7($t6)
+	bne $t8, '\n', errorRange
 checkInputLoop:
 	lb $s3, 0($t6)
 	div $t2, $s2, 2
 	mfhi $t2
-	bne $t2, $zero, ifOdd
+	
+	bne $t2, $zero, ifOddInput
 	li $t7, 55		# even, check if < 7
 	bge $s3, $t7, errorRange
 	bgt $zero, $s3, errorRange
 	j noInputError
-ifOdd:
+ifOddInput:
 	li $t7, 32		# odd, check if space
 	bne $s3, $t7, errorRange
 noInputError:
@@ -442,23 +455,46 @@ game:
         	addi $t0, $a2, 0        # $t0 is player
 
 targetLoop:
+		# input coordinate
         	li $v0, 4
         	la $a0, inputTarget
         	syscall
 
-        	li $v0, 5               # input x
-        	syscall
-        	addi $a2, $v0, 0
-        	jal isValid
-        	beq $v0, $zero, errorTarget
-        	addi $t1, $a2, 0        # store x
-
-        	li $v0, 5               # input y
-        	syscall
-        	addi $a2, $v0, 0
-        	jal isValid
-        	beq $v0, $zero, errorTarget
-        	addi $t2, $a2, 0        # store y
+		addi $t1, $a1, 0 	# store $a1
+		
+		li $v0, 8
+		la $a0, ip
+		li $a1, 1000
+		syscall
+		
+		addi $t2, $a0, 0	# $t2 contains input string
+		addi $a1, $t1, 0	# restore $a1, $t1 have th
+		
+		li $t1, 0		# counter
+checkGameInput:
+		lb $t3, 0($t2) 
+		div $t4, $t1, 2
+		mfhi $t4
+		bne $t4, $zero, ifOddGame
+		li $t5, 55
+		bge $t3, $t5, errorTarget
+		bgt $zero, $t3, errorTarget
+		j keepCheckGame	
+ifOddGame:
+		li $t5, 32
+		bne $t3, $t5, errorTarget
+keepCheckGame:
+		addi $t1, $t1, 1
+		addi $t2, $t2, 1
+		bge $t1, 3, endCheckGame
+		j checkGameInput
+endCheckGame:
+		sub $t2, $t2, 3
+		lb $t1, 0($t2)		# x + 48
+		lb $t2, 2($t2)		# y + 48
+		
+		sub $t1, $t1, 48	# x
+		sub $t2, $t2, 48	# y
 
         	mul $t3, $t1, 7         # t3 is index, $t3 = x * 7
         	add $t3, $t3, $t2       # t3 = x * 7 + y
