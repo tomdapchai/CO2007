@@ -1,5 +1,13 @@
 .text
 main:
+	# Open file
+	li $v0, 13
+	la $a0, logFile
+	li $a1, 1
+	li $a2, 0
+	syscall
+	addi $s6, $v0, 0	# save the file descriptor
+	
 	# Welcome prompt
 	li $v0, 4
 	la $a0, welcome
@@ -86,6 +94,10 @@ rePlaceP1:
 	j dataInputP1
 	
 continuePlayP1:
+	# Hiding board
+	li $v0, 4
+	la $a0, hideBoard
+	syscall
 	# P2
 	li $v0, 4
 	la $a0, inputP2
@@ -152,6 +164,10 @@ rePlaceP2:
 	li $t1, 0
 	j dataInputP2
 continuePlayP2:
+	# Hiding board
+	li $v0, 4
+	la $a0, hideBoard
+	syscall
 # Game start				
 	# set hit counter for two players
 	li $s2, 0	# hit_counter_P1
@@ -218,6 +234,10 @@ selectLoop:
 	# invalid choice
 	j selectLoop
 end:
+	# close the file
+	li $v0, 16
+	addi $a0, $s6, 0
+	syscall
 	# stop the program
 	li $v0, 4
 	la $a0, thanks
@@ -270,12 +290,12 @@ checkInputLoop:
 	
 	bne $t2, $zero, ifOddInput
 	li $t7, 55		# even, check if < 7
-	bge $s3, $t7, errorRange
-	bgt $zero, $s3, errorRange
+	bge $s3, $t7, errorFormat
+	bgt $zero, $s3, errorFormat
 	j noInputError
 ifOddInput:
 	li $t7, 32		# odd, check if space
-	bne $s3, $t7, errorRange
+	bne $s3, $t7, errorFormat
 noInputError:
 	addi $s2, $s2, 1
 	addi $t6, $t6, 1
@@ -592,6 +612,27 @@ loopReset:
 	
     	jr $ra
 
+	# Write input to log.txt
+writeFile:
+	# a1 have the input string
+	li $v0, 15
+	addi $a0, $s6, 0	# load file descriptor
+	li $a2, 0
+	
+	# count the length of $a1 for $a2
+lengthCount:
+	lb $s7, 0($a1)
+	beq $s7, $zero, endLengthCount
+	addi $a2, $a2, 1
+	addi $a1, $a1, 1
+	j lengthCount
+endLengthCount:
+	sub $a1, $a1, $a2	# restore $a1
+	syscall
+	
+	jr $ra
+	
+	
 # Data field
 .data
 	# Initialize two boards with all elements are 0
@@ -628,8 +669,8 @@ loopReset:
 	overlap:	.asciiz "There is already a ship here, please place elsewhere!\n"
 	
 	gameStart:	.asciiz "Let start the game!\n"
-	turnP1:	.asciiz "Player 1 turn.\n"
-	turnP2:	.asciiz "Player 2 turn. \n"
+	turnP1:	.asciiz "Player 1 turn\n"
+	turnP2:	.asciiz "Player 2 turn\n"
 	inputTarget:	.asciiz "Enter the coordinate of the target: "
 	formatTarget:	.asciiz "Invalid target, you must type in 2 numbers from 0 to 6 for the coordinate of the target!\n"
 	invalidTarget:	.asciiz "Invalid target, value of two coordinates must be from 0 to 6!\n"
@@ -641,4 +682,7 @@ loopReset:
 	
 	thanks:	.asciiz "Thanks for playing, hope you enjoy the game!"
 	newline:	.asciiz "\n"
+	hideBoard:	.asciiz "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 	space:	.asciiz " "
+	
+	logFile:	.asciiz "log.txt"
