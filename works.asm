@@ -8,9 +8,30 @@ main:
 	syscall
 	addi $s6, $v0, 0	# save the file descriptor
 	
+	li $v0, 4
+	la $a0, hideBoard
+	syscall
+	
 	# Welcome prompt
 	li $v0, 4
 	la $a0, welcome
+	syscall
+	
+	li $v0, 4
+	la $a0, line
+	syscall
+	
+	li $v0, 4
+	la $a0, ready
+	syscall
+	
+	li $v0, 8
+	la $a0, ip
+	li $a1, 1000
+	syscall
+	
+	li $v0, 4
+	la $a0, line
 	syscall
 	
 	# Reset all board to 0 in case players want to play again
@@ -20,6 +41,11 @@ main:
 	la $a0, board2
 	jal resetBoard
 	
+	la $a0, check1
+	jal resetCheck
+	
+	la $a0, check2
+	jal resetCheck
 	# Show instruction
 	li $v0, 4
 	la $a0, instruction
@@ -59,7 +85,9 @@ executeP1:
 	beq $t1, 3, exitInputP1
 	j dataInputP1
 exitInputP1:	
-
+	li $v0, 4
+	la $a0, line
+	syscall
 	#printOut the board to confirm
 	li $v0, 4
 	la $a0, boardP1
@@ -68,6 +96,9 @@ exitInputP1:
 	la $a2, board1
 	jal printBoard
 	
+	li $v0, 4
+	la $a0, line
+	syscall
 	# Option if player want to place the ships again, or end the game, or continue
 	li $v0, 4
 	la $a0, reThink
@@ -131,7 +162,9 @@ executeP2:
 	beq $t1, 3, exitInputP2
 	j dataInputP2
 exitInputP2:	
-
+	li $v0, 4
+	la $a0, line
+	syscall
 	#printOut the board to confirm
 	li $v0, 4
 	la $a0, boardP2
@@ -139,6 +172,9 @@ exitInputP2:
 
 	la $a2, board2
 	jal printBoard
+	li $v0, 4
+	la $a0, line
+	syscall
 	# Option if player want to place the ships again, or end the game, or continue
 	li $v0, 4
 	la $a0, reThink
@@ -168,7 +204,11 @@ continuePlayP2:
 	li $v0, 4
 	la $a0, hideBoard
 	syscall
-# Game start				
+	
+# Game start	
+	li $v0, 4
+	la $a0, line
+	syscall			
 	# set hit counter for two players
 	li $s2, 0	# hit_counter_P1
 	li $s3, 0	# hit_counter_P2
@@ -477,6 +517,37 @@ game:
         	addi $t0, $a2, 0        # $t0 is player
 
 targetLoop:
+	# Shows opponent board
+	li $v0, 4
+	la $a0, line
+	syscall
+	
+	li $v0, 4
+	la $a0, currentMap
+	syscall
+	
+	beq $t0, 2, mapP1
+	la $a2, check2
+	jal printBoard
+	
+	j inputBegin
+mapP1:
+	la $a2, check1
+	jal printBoard
+	
+
+inputBegin:
+	li $v0, 4
+	la $a0, smallLine
+	syscall
+	
+	li $v0, 4
+	la $a0, mapGuide
+	syscall
+	
+	li $v0, 4
+	la $a0, line
+	syscall
 	# input coordinate
         	li $v0, 4
         	la $a0, inputTarget
@@ -523,6 +594,7 @@ endCheckGame:
         	mul $t3, $t1, 7         # t3 is index, $t3 = x * 7
         	add $t3, $t3, $t2       # t3 = x * 7 + y
         	mul $t3, $t3, 4
+        	addi $t5, $t3, 0
         	add $t3, $t3, $a1       # $t3 now at board_i[x][y]
 
         	lw $t4, 0($t3)          # load value at board_i[x][y] to $t4
@@ -531,19 +603,49 @@ endCheckGame:
         	la $a0, hit
         	syscall
         	
+        	li $v0, 4
+        	la $a0, smallLine
+        	syscall
+        	
         	sw $zero, 0($t3)          # reset 1 to 0
-
-        	bne $t0, 1, hitP2
-        	addi $s2, $s2, 1
+	li $t7, 1
+        	beq $t0, 2, hitP2
+        	addi $s2, $s2, 1	# counter of P1
+        	# Mark in check
+        	la $a0, check2
+        	add $a0, $a0, $t5
+        	sw $t7, 0($a0)
+     
         	j exitGame
 hitP2:
         	addi $s3, $s3, 1
+        	la $a0, check1
+        	add $a0, $a0, $t5
+        	sw $t7, 0($a0)
         	j exitGame
 
 targetMiss:
         	li $v0, 4
         	la $a0, miss
         	syscall
+        	
+        	li $v0, 4
+        	la $a0, smallLine
+        	syscall
+        	
+        	li $t7, 2
+        	
+        	beq $t0, 2, missP2
+        	la $a0, check2
+        	add $a0, $a0, $t5
+        	sw $t7, 0($a0)
+
+        	j exitGame
+missP2:
+	la $a0, check1
+        	add $a0, $a0, $t5
+        	sw $t7, 0($a0)
+
         	j exitGame
 errorFormatTarget:
 	li $v0, 4
@@ -612,6 +714,20 @@ loopReset:
 	
     	jr $ra
 
+resetCheck:
+    	li $t0, 0
+loopCheck:
+   	mul $t2, $t0, 4       
+    	add $t3, $t2, $a0     
+	
+	li $t1, 0
+    	sw $t1, 0($t3)       
+
+    	addi $t0, $t0, 1 
+    	bne $t0, 49, loopCheck
+	
+    	jr $ra
+	
 	# Write input to log.txt
 writeFile:
 	# a1 have the input string
@@ -638,10 +754,15 @@ endLengthCount:
 	# Initialize two boards with all elements are 0
 	board1:	.word 0:49
 	board2:	.word 0:49
+	check1:	.space 196
+	check2:	.space 196 
 	# Create input field
 	ip:	.space 1000
 	
 	welcome:	.asciiz "Welcome to BATTLESHIP game!\n"
+	ready:	.asciiz "Ready to destroy all your opponent's ship?\nPress any key to start the game!"
+	smallLine:	.asciiz "----------------------------------------------------------\n"
+	line:	.asciiz "==========================================================\n"
 	replay:	.asciiz "Want to play again?\n"
 	reThink:	.asciiz "Do you want to place the ships again, or end the game, or continue?\n"
 	rePlace:	.asciiz "Plese type 1 to continue, 2 to place the ship again and 3 for exit the game.\n"
@@ -662,7 +783,7 @@ endLengthCount:
 	shipInput:	.asciiz "Enter the coordinate of the ship: \n"
 	shipShow:	.asciiz "Ship "
 
-	invalidFormat:	.asciiz "Invalid input, you must type in 4 numbers from 0 to 6 for the coordinate of bow and stern!\n"
+	invalidFormat:	.asciiz "Invalid input, you must type in 4 numbers from 0 to 6 for the coordinate of bow and stern with only ONE space between each number, no space at the begin or the end of input!\n"
 	invalidRange:	.asciiz "Invalid input, value must be from 0 to 6!\n"
 	invalidPos:	.asciiz "Invalid input, bow and stern must be on the same row or same column!\n"
 	invalidLength:	.asciiz "Invalid input, required length is " #the length
@@ -672,9 +793,11 @@ endLengthCount:
 	turnP1:	.asciiz "Player 1 turn\n"
 	turnP2:	.asciiz "Player 2 turn\n"
 	inputTarget:	.asciiz "Enter the coordinate of the target: "
-	formatTarget:	.asciiz "Invalid target, you must type in 2 numbers from 0 to 6 for the coordinate of the target!\n"
+	formatTarget:	.asciiz "Invalid target, you must type in 2 numbers from 0 to 6 for the coordinate of the target and there is only ONE space between them, no space at the begin or the end of input!\n"
 	invalidTarget:	.asciiz "Invalid target, value of two coordinates must be from 0 to 6!\n"
-
+	
+	currentMap:	.asciiz "Your opponent's current map: \n"
+	mapGuide:	.asciiz "0 is unrevealed position.\n1 is revealed position and there's a ship's part.\n2 is revealed position and there isn't anything.\n"
 	hit:	.asciiz "HIT!\n"
 	miss:	.asciiz "MISS!\n"
 	winP1:	.asciiz "Player 1 WIN!\n"
@@ -684,5 +807,6 @@ endLengthCount:
 	newline:	.asciiz "\n"
 	hideBoard:	.asciiz "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 	space:	.asciiz " "
+	mark:	.asciiz "*"
 	
 	logFile:	.asciiz "log.txt"
