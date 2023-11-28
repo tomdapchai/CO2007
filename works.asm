@@ -12,6 +12,8 @@ main:
 	la $a0, hideBoard
 	syscall
 	
+	la $a1, logStart
+	jal writeFile
 	# Welcome prompt
 	li $v0, 4
 	la $a0, welcome
@@ -57,6 +59,9 @@ main:
 	la $a0, inputP1
 	syscall			
 	
+	la $a1, inputP1
+	jal writeFile
+	
 	li $t1, 0		# reset $t1 to loop counter
 dataInputP1:
 	beq $t1, 0, bigP1
@@ -66,16 +71,27 @@ bigP1:
 	li $v0, 4
 	la $a0, bigInput
 	syscall
+	
+	la $a1, bigInput
+	jal writeFile
+	
 	j executeP1
 averageP1:
 	li $v0, 4
 	la $a0, averageInput
 	syscall
+	
+	la $a1, averageInput
+	jal writeFile
+	
 	j executeP1
 smallP1:
 	li $v0, 4
 	la $a0, smallInput
 	syscall
+	
+	la $a1, smallInput
+	jal writeFile
 executeP1:
 	la $a0, board1
 	addi $a1, $t1, 1	# input from big > average > small
@@ -103,6 +119,9 @@ exitInputP1:
 	li $v0, 4
 	la $a0, reThink
 	syscall
+	
+	la $a1, reThink
+	jal writeFile
 selectP1:
 	li $v0, 4
 	la $a0, rePlace
@@ -112,6 +131,9 @@ selectP1:
 	la $a0, ip
 	li $a1, 1000
 	syscall
+	
+	addi $a1, $a0, 0
+	jal writeFile
 	
 	lb $t1, 0($a0)
 	beq $t1, 49, continuePlayP1
@@ -133,6 +155,9 @@ continuePlayP1:
 	li $v0, 4
 	la $a0, inputP2
 	syscall
+	
+	la $a1, inputP2
+	jal writeFile
 	li $t1, 0		# reset $t1 to loop counter	
 
 dataInputP2:
@@ -143,16 +168,27 @@ bigP2:
 	li $v0, 4
 	la $a0, bigInput
 	syscall
+	
+	la $a1, bigInput
+	jal writeFile
+	
 	j executeP2
 averageP2:
 	li $v0, 4
 	la $a0, averageInput
 	syscall
+	
+	la $a1, averageInput
+	jal writeFile
+	
 	j executeP2
 smallP2:
 	li $v0, 4
 	la $a0, smallInput
 	syscall
+	
+	la $a1, smallInput
+	jal writeFile
 executeP2:
 	la $a0, board2
 	addi $a1, $t1, 1	# input from big > average > small
@@ -179,6 +215,9 @@ exitInputP2:
 	li $v0, 4
 	la $a0, reThink
 	syscall
+	
+	la $a1, reThink
+	jal writeFile
 selectP2:
 	li $v0, 4
 	la $a0, rePlace
@@ -188,6 +227,9 @@ selectP2:
 	la $a0, ip
 	li $a1, 1000
 	syscall
+	
+	addi $a1, $a0, 0
+	jal writeFile
 	
 	lb $t1, 0($a0)
 	beq $t1, 49, continuePlayP2
@@ -208,7 +250,10 @@ continuePlayP2:
 # Game start	
 	li $v0, 4
 	la $a0, line
-	syscall			
+	syscall
+	
+	la $a1, line
+	jal writeFile			
 	# set hit counter for two players
 	li $s2, 0	# hit_counter_P1
 	li $s3, 0	# hit_counter_P2
@@ -222,6 +267,9 @@ while:
     	li $v0, 4
     	la $a0, turnP1
     	syscall
+    	la $a1, turnP1
+    	jal writeFile
+    	
     	la $a1, board2          # store board2 to $a1
     	li $a2, 1               # mode 1, player 1
     	jal game                # turn works with two arguments $a1, $a2
@@ -230,6 +278,10 @@ while:
     	li $v0, 4
     	la $a0, turnP2
     	syscall
+    	
+    	la $a1, turnP2
+    	jal writeFile
+    	
     	la $a1, board1
     	li $a2, 2
     	jal game
@@ -240,11 +292,17 @@ P1win:
 	li $v0, 4
 	la $a0, winP1
 	syscall
+	
+	la $a1, winP1
+	jal writeFile
 	j endGame
 P2win:
 	li $v0, 4
 	la $a0, winP2
 	syscall
+	
+	la $a1, winP2
+	jal writeFile
 endGame:
 	li $v0, 4
 	la $a0, replay
@@ -262,12 +320,16 @@ selectLoop:
 	li $v0, 4
 	la $a0, selection
 	syscall
-
+	
+	la $a1, selection
+	jal writeFile
 	li $v0, 8
 	la $a0, ip
 	li $a1, 1000
 	syscall
 	
+	addi $a1, $a0, 0
+	jal writeFile
 	lb $t0, 0($a0)
 	beq $t0, 49, main	# 1
 	beq $t0, 50, end	# 2
@@ -282,6 +344,9 @@ end:
 	li $v0, 4
 	la $a0, thanks
 	syscall
+	
+	la $a1, logEnd
+	jal writeFile
 	
 	li $v0, 10
 	syscall
@@ -298,9 +363,14 @@ input:
 inputLoop:			# n times, n = 1, 2, 3
 	li $t0, 0
 	
+	addi $s2, $a1, 0	# store $a1 value
+	
 	li $v0, 4
 	la $a0, shipShow
 	syscall
+	
+	la $a1, logInput
+	jal writeFile
 	
 	li $v0, 1
 	addi $a0, $t1, 1
@@ -311,12 +381,14 @@ inputLoop:			# n times, n = 1, 2, 3
 	syscall
 	
 	# input
-	addi $s2, $a1, 0	# store $a1 value
 	
 	li $v0, 8
 	la $a0, ip
 	li $a1, 1000
 	syscall
+	
+	addi $a1, $a0, 0
+	jal writeFile
 	
 	addi $a1, $s2, 0	# restore $a1 value, $s2 free
 	addi $t6, $a0, 0	# t6 contains input string
@@ -474,16 +546,33 @@ errorFormat:
 	li $v0, 4
 	la $a0, invalidFormat
 	syscall
+	
+	addi $s2, $a1, 0
+	
+	la $a1, invalidFormat
+	jal writeFile
+	
+	addi $a1, $s2, 0
 	j keepInput
 errorRange:
 	li $v0, 4
 	la $a0, invalidRange
 	syscall
+	
+	addi $s2, $a1, 0
+	la $a1, invalidRange
+	jal writeFile
+	addi $a1, $s2, 0
 	j keepInput
 errorPos:
 	li $v0, 4
 	la $a0, invalidPos
 	syscall
+	
+	addi $s2, $a1, 0
+	la $a1, invalidPos
+	jal writeFile
+	addi $a1, $s2, 0
 	j keepInput
 errorLength:
 	li $v0, 4
@@ -497,11 +586,23 @@ errorLength:
 	li $v0, 4
 	la $a0, newline
 	syscall
+	
+	addi $s2, $a1, 0
+	la $a1, logLength
+	jal writeFile
+	
+	la $a1, newline
+	jal writeFile
+	addi $a1, $s2, 0
+	
 	j keepInput
 errorOverlap:
 	li $v0, 4
 	la $a0, overlap
 	syscall
+	
+	la $a1, overlap
+	jal writeFile
 keepInput:
 	j inputLoop
 exitInput:	
@@ -534,11 +635,10 @@ targetLoop:
 mapP1:
 	la $a2, check1
 	jal printBoard
-	
 
 inputBegin:
 	li $v0, 4
-	la $a0, smallLine
+	la $a0, line
 	syscall
 	
 	li $v0, 4
@@ -546,20 +646,26 @@ inputBegin:
 	syscall
 	
 	li $v0, 4
-	la $a0, line
+	la $a0, smallLine
 	syscall
 	# input coordinate
         	li $v0, 4
         	la $a0, inputTarget
         	syscall
-
+	
 	addi $t1, $a1, 0 	# store $a1
-		
+	
+	la $a1, inputTarget
+	jal writeFile
+	
 	li $v0, 8
 	la $a0, ip
 	li $a1, 1000
 	syscall
-		
+	
+	addi $a1, $a0, 0
+	jal writeFile
+	
 	addi $t2, $a0, 0	# $t2 contains input string
 	addi $a1, $t1, 0	# restore $a1, $t1 have th
 	
@@ -603,8 +709,13 @@ endCheckGame:
         	la $a0, hit
         	syscall
         	
+        	addi $t7, $a1, 0
+        	la $a1, hit
+        	jal writeFile
+        	addi $a1, $t7, 0
+        	
         	li $v0, 4
-        	la $a0, smallLine
+        	la $a0, line
         	syscall
         	
         	sw $zero, 0($t3)          # reset 1 to 0
@@ -629,8 +740,13 @@ targetMiss:
         	la $a0, miss
         	syscall
         	
+        	addi $t7, $a1, 0
+        	la $a1, miss
+        	jal writeFile
+        	addi $a1, $t7, 0
+        	
         	li $v0, 4
-        	la $a0, smallLine
+        	la $a0, line
         	syscall
         	
         	li $t7, 2
@@ -638,12 +754,16 @@ targetMiss:
         	beq $t0, 2, missP2
         	la $a0, check2
         	add $a0, $a0, $t5
+        	lw $t6, 0($a0)
+        	bne $t6, $zero, exitGame
         	sw $t7, 0($a0)
 
         	j exitGame
 missP2:
 	la $a0, check1
         	add $a0, $a0, $t5
+        	lw $t6, 0($a0)
+        	bne $t6, $zero, exitGame
         	sw $t7, 0($a0)
 
         	j exitGame
@@ -651,11 +771,23 @@ errorFormatTarget:
 	li $v0, 4
 	la $a0, formatTarget
 	syscall
+	
+	addi $t7, $a1, 0
+        	la $a1, formatTarget
+        	jal writeFile
+        	addi $a1, $t7, 0
+        	
 	j targetLoop
 errorTarget:
         	li $v0, 4
         	la $a0, invalidTarget
         	syscall
+        	
+        	addi $t7, $a1, 0
+        	la $a1, invalidTarget
+        	jal writeFile
+        	addi $a1, $t7, 0
+        	
         	j targetLoop
 
 exitGame:
@@ -731,6 +863,11 @@ loopCheck:
 	# Write input to log.txt
 writeFile:
 	# a1 have the input string
+	addi $sp, $sp, -16
+	sw $a0, 0($sp)
+	sw $a2, 4($sp)
+	sw $s7, 8($sp)
+	sw $a1, 12($sp)
 	li $v0, 15
 	addi $a0, $s6, 0	# load file descriptor
 	li $a2, 0
@@ -746,6 +883,11 @@ endLengthCount:
 	sub $a1, $a1, $a2	# restore $a1
 	syscall
 	
+	lw $a0, 0($sp)
+	lw $a2, 4($sp)
+	lw $s7, 8($sp)
+	lw $a1, 12($sp)
+	addi $sp, $sp, 16
 	jr $ra
 	
 	
@@ -809,4 +951,9 @@ endLengthCount:
 	space:	.asciiz " "
 	mark:	.asciiz "*"
 	
+	# log things
+	logStart:	.asciiz "=============START============="
+	logEnd:	.asciiz "==============END=============="
+	logInput:	.asciiz "Input: "
+	logLength:	.asciiz "Wrong length\n"
 	logFile:	.asciiz "log.txt"
