@@ -7,7 +7,7 @@ main:
 	li $a2, 0
 	syscall
 	addi $s6, $v0, 0	# save the file descriptor
-	
+play:	
 	li $v0, 4
 	la $a0, hideBoard
 	syscall
@@ -15,8 +15,28 @@ main:
 	la $a1, logStart
 	jal writeFile
 	# Welcome prompt
+	
 	li $v0, 4
-	la $a0, welcome
+	la $a0, welcomeArt
+	syscall
+	
+	li $v0, 4
+	la $a0, gameArt
+	syscall
+	
+	#li $v0, 4
+	#la $a0, welcome
+	#syscall
+	
+	li $v0, 4
+	la $a0, newline
+	syscall
+	
+	li $v0, 4
+	la $a0, newline
+	
+	li $v0, 4
+	la $a0, shipArt
 	syscall
 	
 	li $v0, 4
@@ -52,8 +72,34 @@ main:
 	li $v0, 4
 	la $a0, instruction
 	syscall
+
+	la $a0, newline
+	syscall
 	
+	la $a0, continue
+	syscall
+	
+	li $v0, 8
+	la $a0, ip
+	li $a1, 1000
+	syscall
 	# Start inputing
+	li $v0, 4
+	la $a0, line
+	syscall
+	
+	la $a0, inputArt
+	syscall
+
+	la $a0, newline
+	syscall
+	
+	la $a0, line
+	syscall
+	
+	li $v0, 32
+	li $a0, 2000
+	syscall
 	# P1
 	li $v0, 4
 	la $a0, inputP1
@@ -61,6 +107,13 @@ main:
 	
 	la $a1, inputP1
 	jal writeFile
+	
+	li $v0, 4
+	la $a0, currentBoard
+	syscall
+	
+	la $a2, board1
+	jal printBoard
 	
 	li $t1, 0		# reset $t1 to loop counter
 dataInputP1:
@@ -172,6 +225,13 @@ bigP2:
 	la $a1, bigInput
 	jal writeFile
 	
+	li $v0, 4
+	la $a0, currentBoard
+	syscall
+	
+	la $a2, board2
+	jal printBoard
+	
 	j executeP2
 averageP2:
 	li $v0, 4
@@ -257,9 +317,44 @@ continuePlayP2:
 	# set hit counter for two players
 	li $s2, 0	# hit_counter_P1
 	li $s3, 0	# hit_counter_P2
-
-    	li $v0, 4
+	
+	li $v0, 4
+	la $a0, gameOnArt
+	syscall
+	
+	la $a0, newline
+	syscall
+	
+	la $a0, line
+	syscall
+	
+	li $v0, 32
+	li $a0, 2000
+	syscall
+	
+	li $v0, 4
+	la $a0, gameIns
+	syscall
+	
+	la $a0, newline
+	syscall
+	
     	la $a0, gameStart
+    	syscall
+    	
+    	la $a0, newline
+	syscall
+	
+	la $a0, continue
+	syscall
+	
+	li $v0, 8
+	la $a0, ip
+	li $a1, 1000
+	syscall
+    	
+    	li $v0, 4
+    	la $a0, smallLine
     	syscall
 
 while:
@@ -290,29 +385,69 @@ while:
 	
 P1win:
 	li $v0, 4
-	la $a0, winP1
+	la $a0, hideBoard
+	syscall
+	
+	la $a0, winP1Art
 	syscall
 	
 	la $a1, winP1
 	jal writeFile
+	
+	li $v0, 32
+	li $a0, 5000
+	syscall
+	
+	li $v0, 4
+	la $a0, newline
+	syscall
+	
+	la $a0, continue
+	syscall
+	
+	li $v0, 8
+	la $a0, ip
+	li $a1, 1000
+	syscall
+	
 	j endGame
 P2win:
 	li $v0, 4
-	la $a0, winP2
+	la $a0, hideBoard
+	syscall
+	
+	la $a0, winP2Art
 	syscall
 	
 	la $a1, winP2
 	jal writeFile
+	
+	li $v0, 32
+	li $a0, 5000
+	syscall
+	
+	li $v0, 4
+	la $a0, newline
+	syscall
+	
+	la $a0, continue
+	syscall
+	
+	li $v0, 8
+	la $a0, ip
+	li $a1, 1000
+	syscall
 endGame:
 	li $v0, 4
+	la $a0, hideBoard
+	syscall
+	
 	la $a0, replay
 	syscall
 	
-	li $v0, 4
 	la $a0, yes
 	syscall
 	
-	li $v0, 4
 	la $a0, no
 	syscall
 	
@@ -331,11 +466,13 @@ selectLoop:
 	addi $a1, $a0, 0
 	jal writeFile
 	lb $t0, 0($a0)
-	beq $t0, 49, main	# 1
+	beq $t0, 49, play	# 1
 	beq $t0, 50, end	# 2
 	# invalid choice
 	j selectLoop
 end:
+	la $a1, logEnd
+	jal writeFile
 	# close the file
 	li $v0, 16
 	addi $a0, $s6, 0
@@ -601,8 +738,10 @@ errorOverlap:
 	la $a0, overlap
 	syscall
 	
+	addi $s2, $a1, 0
 	la $a1, overlap
 	jal writeFile
+	addi $a1, $s2, 0
 keepInput:
 	j inputLoop
 exitInput:	
@@ -620,7 +759,7 @@ game:
 targetLoop:
 	# Shows opponent board
 	li $v0, 4
-	la $a0, line
+	la $a0, smallLine
 	syscall
 	
 	li $v0, 4
@@ -638,7 +777,7 @@ mapP1:
 
 inputBegin:
 	li $v0, 4
-	la $a0, line
+	la $a0, smallLine
 	syscall
 	
 	li $v0, 4
@@ -706,7 +845,7 @@ endCheckGame:
         	lw $t4, 0($t3)          # load value at board_i[x][y] to $t4
         	beq $t4, $zero, targetMiss
         	li $v0, 4
-        	la $a0, hit
+        	la $a0, hitArt
         	syscall
         	
         	addi $t7, $a1, 0
@@ -737,7 +876,7 @@ hitP2:
 
 targetMiss:
         	li $v0, 4
-        	la $a0, miss
+        	la $a0, missArt
         	syscall
         	
         	addi $t7, $a1, 0
@@ -791,6 +930,11 @@ errorTarget:
         	j targetLoop
 
 exitGame:
+	# delay
+	li $v0, 32
+	li $a0, 1500
+	syscall
+	
         	lw $ra, 0($sp)
         	addi $sp, $sp, 4
         	jr $ra
@@ -802,10 +946,43 @@ printBoard:
 	li $t2, 7 		# number of columns
 	li $t3, 0 		# row counter
 	li $t4, 0 		# column counter
+	
+	li $v0, 4
+	la $a0, dash
+	syscall
+	
+	li $v0, 4
+	la $a0, rowN
+	syscall
+	
+	li $v0, 4
+	la $a0, dash
+	syscall
 startPrint:
 	# function to shows the board after each ship placement
     	bge $t3, $t1, exitBoard 	# if we've printed all rows, exit
     	li $t4, 0 		# reset column counter for new row
+    	la $a0, slash
+        	li $v0, 4
+        	syscall
+        	
+        	la $a0, space
+        	li $v0, 4
+        	syscall
+        	
+	li $v0, 1
+        	addi $a0, $t3, 0
+        	syscall
+        	
+        	li $v0, 4
+        	la $a0, space
+        	syscall
+        	
+        	la $a0, slash
+        	syscall
+        	
+        	la $a0, space
+        	syscall
 printRow:
         	bge $t4, $t2, printNewline 	# if printed all columns in this row, print newline
         	mul $t5, $t3, $t2 	
@@ -820,12 +997,25 @@ printRow:
         	li $v0, 4
         	syscall
         	
+        	la $a0, slash
+        	li $v0, 4
+        	syscall
+        	
+        	la $a0, space
+        	li $v0, 4
+        	syscall
+        	
         	addi $t4, $t4, 1 	# increment column counter
         	j printRow
 printNewline:
         	li $v0, 4 		
         	la $a0, newline 	
         	syscall
+        	
+        	li $v0, 4
+        	la $a0, dash
+        	syscall
+        	
         	addi $t3, $t3, 1 	# row counter ++
         	j startPrint
 exitBoard:
@@ -901,8 +1091,13 @@ endLengthCount:
 	# Create input field
 	ip:	.space 1000
 	
-	welcome:	.asciiz "Welcome to BATTLESHIP game!\n"
-	ready:	.asciiz "Ready to destroy all your opponent's ship?\nPress any key to start the game!"
+	#welcome:	.asciiz "Welcome to BATTLESHIP game!\n"
+	ready:	.asciiz "READY TO DESTROY ALL YOUR OPPONENT'S SHIPS?\nPress ENTER to start the game!"
+	welcomeArt:	.asciiz "  _      __    __                     __     \n | | /| / /__ / /______  __ _  ___   / /____ \n | |/ |/ / -_) / __/ _ \\/  ' \\/ -_) / __/ _ \\\n |__/|__/\\__/_/\\__/\\___/_/_/_/\\__/  \\__/\\___/\n"
+	shipArt:	.asciiz "                                                                          # #  ( )\n                                                                       ___#_#___|__\n                                                                   _  |____________|  _\n                                                            _=====| | |            | | |==== _\n                                                      =====| |.---------------------------. | |====\n                                        <--------------------'   .  .  .  .  .  .  .  .   '--------------/\n                                          \\                                                             /\n                                           \\_______________________________________________VTT_________/\n                                       wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww\n                                     wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww\n                                        wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww\n"
+	gameArt:	.asciiz "		 ________   ________   _________  _________  __        ______   ______   ___   ___    ________  ______    \n		/_______/\\ /_______/\\ /________/\\/________/\\/_/\\      /_____/\\ /_____/\\ /__/\\ /__/\\  /_______/\\/_____/\\   \n		\\::: _  \\ \\\\::: _  \\ \\\\__.::.__\\/\\__.::.__\\/\\:\\ \\     \\::::_\\/_\\::::_\\/_\\::\\ \\\\  \\ \\ \\__.::._\\/\\:::_ \\ \\  \n		 \\::(_)  \\/_\\::(_)  \\ \\  \\::\\ \\     \\::\\ \\   \\:\\ \\     \\:\\/___/\\\\:\\/___/\\\\::\\/_\\ .\\ \\   \\::\\ \\  \\:(_) \\ \\ \n		  \\::  _  \\ \\\\:: __  \\ \\  \\::\\ \\     \\::\\ \\   \\:\\  \\____\\::___\\/_\\_::._\\:\\\\:: ___::\\ \\  _\\::\\ \\__\\: ___\\/ \n		   \\::(_)  \\ \\\\:.\\ \\  \\ \\  \\::\\ \\     \\::\\ \\   \\:\\/____/\\\\:\\____/\\ /____\\:\\\\: \\ \\\\::\\ \\/__\\::\\__/\\\\ \\ \\   \n		    \\_______\\/ \\__\\/\\__\\/   \\__\\/      \\__\\/    \\_______/ \\_____\\/ \\_____\\/ \\__\\/ \\::\\/\\________\\/ \\_\\/ \n"
+
+
 	smallLine:	.asciiz "----------------------------------------------------------\n"
 	line:	.asciiz "==========================================================\n"
 	replay:	.asciiz "Want to play again?\n"
@@ -912,16 +1107,17 @@ endLengthCount:
 	no:	.asciiz "2. Exit.\n"
 	
 	selection:	.asciiz "Please type 1 for Play again, 2 for Exit.\n"
-	instruction:	.asciiz "To start, each player have to give the coordinate of 3 2x1 ships, 2 3x1 ships, 1 4x1 ships with format <row_bow> <column_bow> <row_stern> <column_stern> \nFor example: a 4x1 ship has the coordinate of bow is (0, 0) and stern is (0, 3) will be entered as 0 0 0 3.\n"
+	instruction:	.asciiz "Instruction:\nPLACING (INPUT) SHIPS:\nEach player is given 3 types of ships:\n     * 1 4x1 ship.\n     * 2 3x1 ships.\n     * 3 2x1 ships.\nEach player have to place all ships given to a 7x7 map by following format:\n     <row_bow> <column_bow> <row_stern> <column_stern>\nFor example: a 4x1 ship has the coordinate of bow (head) is (0, 0) and stern (tail) is (0, 3) will be entered as 0 0 0 3.\n\nGOAL:\nThe goal for each player is try to DESTROY all the opponent's ship by giving a coordinate (x, y) each turn by format:\n     <num_row> <num_col>\nFor example, your target is cell (1, 5) in the map, then you type 1 5.\n" 
+	inputArt:	.asciiz "  ___ _   _ ____  _   _ _____\n |_ _| \\ | |  _ \\| | | |_   _|\n  | ||  \\| | |_) | | | | | |\n  | || |\\  |  __/| |_| | | |\n |___|_| \\_|_|    \\___/  |_|\n"
 	inputP1:	.asciiz "Player 1 input: \n"
 	inputP2:	.asciiz "Player 2 input: \n"
 	currentBoard:	.asciiz "Current map: \n"
 	boardP1:	.asciiz "Map of Player 1: \n"
 	boardP2:	.asciiz "Map of Player 2: \n"
 	
-	smallInput:	.asciiz "2x1 ships input: \n"
-	averageInput:	.asciiz "3x1 ships input: \n"
-	bigInput:	.asciiz "4x1 ships input: \n"
+	smallInput:	.asciiz "2x1 ships input, you need to place 3 ships: \n"
+	averageInput:	.asciiz "3x1 ships input, you need to place 2 ships: \n"
+	bigInput:	.asciiz "4x1 ships input, you need to place 1 ship: \n"
 	shipInput:	.asciiz "Enter the coordinate of the ship: \n"
 	shipShow:	.asciiz "Ship "
 
@@ -931,9 +1127,11 @@ endLengthCount:
 	invalidLength:	.asciiz "Invalid input, required length is " #the length
 	overlap:	.asciiz "There is already a ship here, please place elsewhere!\n"
 	
+	gameIns:	.asciiz "WHAT TO DO:\nThe goal for each player is try to DESTROY all the opponent's ship by giving a coordinate (x, y) each turn by format:\n     <num_row> <num_col>\nFor example, your target is cell (1, 5) in the map, then you type 1 5.\n"
+	gameOnArt:	.asciiz "\n   ____    _    __  __ _____    ___  _   _ _\n  / ___|  / \\  |  \\/  | ____|  / _ \\| \\ | | |\n | |  _  / _ \\ | |\\/| |  _|   | | | |  \\| | |\n | |_| |/ ___ \\| |  | | |___  | |_| | |\\  |_|\n  \\____/_/   \\_\\_|  |_|_____|  \\___/|_| \\_(_)\n"
 	gameStart:	.asciiz "Let start the game!\n"
-	turnP1:	.asciiz "Player 1 turn\n"
-	turnP2:	.asciiz "Player 2 turn\n"
+	turnP1:	.asciiz "PLAYER 1 TURN\n"
+	turnP2:	.asciiz "PLAYER 2 TURN\n"
 	inputTarget:	.asciiz "Enter the coordinate of the target: "
 	formatTarget:	.asciiz "Invalid target, you must type in 2 numbers from 0 to 6 for the coordinate of the target and there is only ONE space between them, no space at the begin or the end of input!\n"
 	invalidTarget:	.asciiz "Invalid target, value of two coordinates must be from 0 to 6!\n"
@@ -942,6 +1140,10 @@ endLengthCount:
 	mapGuide:	.asciiz "0 is unrevealed position.\n1 is revealed position and there's a ship's part.\n2 is revealed position and there isn't anything.\n"
 	hit:	.asciiz "HIT!\n"
 	miss:	.asciiz "MISS!\n"
+	hitArt:	.asciiz " ___   ___    ________  _________  ___\n/__/\\ /__/\\  /_______/\\/________/\\/__/\\\n\\::\\ \\\\  \\ \\ \\__.::._\\/\\__.::.__\\/\\.:\\ \\\n \\::\\/_\\ .\\ \\   \\::\\ \\    \\::\\ \\   \\::\\ \\\n  \\:: ___::\\ \\  _\\::\\ \\__  \\::\\ \\   \\__\\/_\n   \\: \\ \\\\::\\ \\/__\\::\\__/\\  \\::\\ \\    /__/\\\n    \\__\\/ \\::\\/\\________\\/   \\__\\/    \\__\\/\n"
+	missArt:	.asciiz " ___ __ __    ________  ______   ______   ___\n/__//_//_/\\  /_______/\\/_____/\\ /_____/\\ /__/\\\n\\::\\| \\| \\ \\ \\__.::._\\/\\::::_\\/_\\::::_\\/_\\.:\\ \\\n \\:.      \\ \\   \\::\\ \\  \\:\\/___/\\\\:\\/___/\\\\::\\ \\\n  \\:.\\-/\\  \\ \\  _\\::\\ \\__\\_::._\\:\\\\_::._\\:\\\\__\\/_\n   \\. \\  \\  \\ \\/__\\::\\__/\\ /____\\:\\ /____\\:\\ /__/\\\n    \\__\\/ \\__\\/\\________\\/ \\_____\\/ \\_____\\/ \\__\\/\n"
+	winP1Art:	.asciiz " ______   __       ________   __  __   ______   ______        ____         __ __ __    ________  ___   __    __\n/_____/\\ /_/\\     /_______/\\ /_/\\/_/\\ /_____/\\ /_____/\\      /___/\\       /_//_//_/\\  /_______/\\/__/\\ /__/\\ /__/\\\n\\:::_ \\ \\\\:\\ \\    \\::: _  \\ \\\\ \\ \\ \\ \\\\::::_\\/_\\:::_ \\ \\     \\_::\\ \\      \\:\\\\:\\\\:\\ \\ \\__.::._\\/\\::\\_\\\\  \\ \\\\.:\\ \\\n \\:(_) \\ \\\\:\\ \\    \\::(_)  \\ \\\\:\\_\\ \\ \\\\:\\/___/\\\\:(_) ) )_     \\::\\ \\      \\:\\\\:\\\\:\\ \\   \\::\\ \\  \\:. `-\\  \\ \\\\::\\ \\\n  \\: ___\\/ \\:\\ \\____\\:: __  \\ \\\\::::_\\/ \\::___\\/_\\: __ `\\ \\    _\\: \\ \\__    \\:\\\\:\\\\:\\ \\  _\\::\\ \\__\\:. _    \\ \\\\__\\/_\n   \\ \\ \\    \\:\\/___/\\\\:.\\ \\  \\ \\ \\::\\ \\  \\:\\____/\\\\ \\ `\\ \\ \\  /__\\: \\__/\\    \\:\\\\:\\\\:\\ \\/__\\::\\__/\\\\. \\`-\\  \\ \\ /__/\\\n    \\_\\/     \\_____\\/ \\__\\/\\__\\/  \\__\\/   \\_____\\/ \\_\\/ \\_\\/  \\________\\/     \\_______\\/\\________\\/ \\__\\/ \\__\\/ \\__\\/\n"
+	winP2Art:	.asciiz " ______   __       ________   __  __   ______   ______        _____        __ __ __    ________  ___   __    __\n/_____/\\ /_/\\     /_______/\\ /_/\\/_/\\ /_____/\\ /_____/\\      /_____/\\     /_//_//_/\\  /_______/\\/__/\\ /__/\\ /__/\\\n\\:::_ \\ \\\\:\\ \\    \\::: _  \\ \\\\ \\ \\ \\ \\\\::::_\\/_\\:::_ \\ \\     \\:::_:\\ \\    \\:\\\\:\\\\:\\ \\ \\__.::._\\/\\::\\_\\\\  \\ \\\\.:\\ \\\n \\:(_) \\ \\\\:\\ \\    \\::(_)  \\ \\\\:\\_\\ \\ \\\\:\\/___/\\\\:(_) ) )_       _\\:\\|     \\:\\\\:\\\\:\\ \\   \\::\\ \\  \\:. `-\\  \\ \\\\::\\ \\\n  \\: ___\\/ \\:\\ \\____\\:: __  \\ \\\\::::_\\/ \\::___\\/_\\: __ `\\ \\     /::_/__     \\:\\\\:\\\\:\\ \\  _\\::\\ \\__\\:. _    \\ \\\\__\\/_\n   \\ \\ \\    \\:\\/___/\\\\:.\\ \\  \\ \\ \\::\\ \\  \\:\\____/\\\\ \\ `\\ \\ \\    \\:\\____/\\    \\:\\\\:\\\\:\\ \\/__\\::\\__/\\\\. \\`-\\  \\ \\ /__/\\\n    \\_\\/     \\_____\\/ \\__\\/\\__\\/  \\__\\/   \\_____\\/ \\_\\/ \\_\\/     \\_____\\/     \\_______\\/\\________\\/ \\__\\/ \\__\\/ \\__\\/\n"
 	winP1:	.asciiz "Player 1 WIN!\n"
 	winP2:	.asciiz "Player 2 WIN!\n"
 	
@@ -949,11 +1151,14 @@ endLengthCount:
 	newline:	.asciiz "\n"
 	hideBoard:	.asciiz "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 	space:	.asciiz " "
+	slash:	.asciiz "|"
+	dash:	.asciiz "|---|---|---|---|---|---|---|---|\n"
+	rowN:	.asciiz "|r\\c| 0 | 1 | 2 | 3 | 4 | 5 | 6 |\n"
 	mark:	.asciiz "*"
-	
+	continue:	.asciiz "Press ENTER to continue.\n"
 	# log things
-	logStart:	.asciiz "=============START============="
-	logEnd:	.asciiz "==============END=============="
+	logStart:	.asciiz "========================START=======================\n"
+	logEnd:	.asciiz "=========================END========================"
 	logInput:	.asciiz "Input: "
 	logLength:	.asciiz "Wrong length\n"
 	logFile:	.asciiz "log.txt"
